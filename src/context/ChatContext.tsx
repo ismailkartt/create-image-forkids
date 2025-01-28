@@ -119,7 +119,7 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
         content: response.content,
         contentType: response.type,
         imageUrl: response.imageUrl,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
         storyPart: 1,
         actions: ['edit', 'generate-image']
       };
@@ -133,7 +133,7 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
         id: (Date.now() + 2).toString(),
         role: 'assistant',
         content: 'Mesaj gönderilemedi. Lütfen tekrar deneyin.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -156,7 +156,7 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
         id: (Date.now() + 3).toString(),
         role: 'assistant',
         content: 'Düzenleme başarısız oldu. Lütfen tekrar deneyin.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     }
@@ -188,7 +188,7 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
         id: (Date.now() + 4).toString(),
         role: 'assistant',
         content: 'Görsel oluşturulamadı. Lütfen tekrar deneyin.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -204,8 +204,7 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
       setIsLoading(true);
       const storyPart = message.storyPart || 1;
       await sendMessage(
-        `Hikayenin ${storyPart + 1}. bölümünü yaz ve bu bölümü tam olarak bitir. Yarım bırakma. Önceki bölüm: ${message.content}`,
-        storyPart + 1
+        `Hikayenin ${storyPart + 1}. bölümünü yaz ve bu bölümü tam olarak bitir. Yarım bırakma. Önceki bölüm: ${message.content}`
       );
     } catch (error) {
       console.error('Story continuation error:', error);
@@ -213,7 +212,8 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
       const errorMessage: Message = {
         id: (Date.now() + 5).toString(),
         role: 'system',
-        content: 'Hikaye devam ettirilemedi. Lütfen tekrar deneyin.'
+        content: 'Hikaye devam ettirilemedi. Lütfen tekrar deneyin.',
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -247,7 +247,8 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
       const errorMessage: Message = {
         id: (Date.now() + 6).toString(),
         role: 'system',
-        content: 'Kaydetme hatası. Lütfen tekrar deneyin.'
+        content: 'Kaydetme hatası. Lütfen tekrar deneyin.',
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
