@@ -32,9 +32,9 @@ export async function OPTIONS(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const res = new NextResponse();
+  const res = new NextResponse(); // No body initially
   if (!checkOriginAndSetHeaders(req, res)) {
-    return new NextResponse("Forbidden", { status: 403 })
+      return new NextResponse("Forbidden", { status: 403 })
   }
 
   try {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     if (!message) {
       return NextResponse.json(
         { success: false, error: 'Mesaj içeriği gerekli' },
-        { status: 400 }
+        { status: 400 } // Headers are already set by checkOriginAndSetHeaders
       );
     }
 
@@ -52,11 +52,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { success: true, data: response },
-      { status: 200 }
+      { status: 200 } // Headers are already set
     );
 
   } catch (error) {
     console.error('API Hatası:', error);
+
     let errorMessage = 'Bir hata oluştu';
     if (error instanceof Error) {
       errorMessage = error.message;
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { success: false, error: errorMessage },
-      { status: 500 }
+      { status: 500 } // Headers are already set
     );
   }
 }
