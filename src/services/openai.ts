@@ -117,42 +117,42 @@ export class OpenAIService {
     try {
       await this.rateLimiter();
 
-      const processId = Date.now().toString();
+      // Çocuk dostu ve güvenli prompt oluştur
       const safePrompt = `Çocuk dostu illüstrasyon: ${prompt.slice(0, 800)}`;
 
-      // Görsel oluşturma işlemini başlat
-      this.openai.images.generate({
+      const response = await this.openai.images.generate({
         model: model as 'dall-e-2' | 'dall-e-3',
         prompt: safePrompt,
         n: 1,
-        size: '256x256',
+        size: '1024x1024',
         quality: 'standard',
         style: 'natural'
-      }).then(async response => {
-        const imageUrl = response.data[0].url;
-        if (imageUrl) {
-          // Webhook'a bildir - URL'yi düzelttik
-          const webhookUrl = process.env.NEXT_PUBLIC_APP_URL 
-            ? `${process.env.NEXT_PUBLIC_APP_URL}/api/chat/webhook`
-            : 'http://localhost:3000/api/chat/webhook';
-
-          await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-webhook-secret': process.env.WEBHOOK_SECRET || ''
-            },
-            body: JSON.stringify({ imageUrl, processId })
-          });
-        }
-      }).catch(error => {
-        console.error('OpenAI görsel oluşturma hatası:', error);
       });
 
-      return processId;
+      const imageUrl = response.data[0].url;
+      if (!imageUrl) {
+        throw new Error('Görsel URL\'i bulunamadı');
+      }
+
+      return imageUrl;
     } catch (error) {
       console.error('OpenAI Görsel Oluşturma Hatası:', error);
-      throw error;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('length')) {
+          throw new Error('Görsel açıklaması çok uzun. Lütfen daha kısa bir açıklama deneyin.');
+        }
+        if (error.message.includes('safety')) {
+          throw new Error('Bu içerik için görsel oluşturulamıyor. Lütfen daha uygun bir açıklama deneyin.');
+        }
+        if (error.message.includes('rate limit')) {
+          throw new Error('Çok fazla istek gönderildi. Lütfen biraz bekleyin.');
+        }
+        if (error.message.includes('api key')) {
+          throw new Error('API anahtarı geçersiz veya eksik');
+        }
+      }
+      throw new Error('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
 
