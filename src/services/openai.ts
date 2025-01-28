@@ -125,14 +125,18 @@ export class OpenAIService {
         model: model as 'dall-e-2' | 'dall-e-3',
         prompt: safePrompt,
         n: 1,
-        size: '256x256', // Daha küçük boyut
+        size: '256x256',
         quality: 'standard',
         style: 'natural'
       }).then(async response => {
         const imageUrl = response.data[0].url;
         if (imageUrl) {
-          // Webhook'a bildir
-          await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat/webhook`, {
+          // Webhook'a bildir - URL'yi düzelttik
+          const webhookUrl = process.env.NEXT_PUBLIC_APP_URL 
+            ? `${process.env.NEXT_PUBLIC_APP_URL}/api/chat/webhook`
+            : 'http://localhost:3000/api/chat/webhook';
+
+          await fetch(webhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -141,9 +145,10 @@ export class OpenAIService {
             body: JSON.stringify({ imageUrl, processId })
           });
         }
-      }).catch(console.error);
+      }).catch(error => {
+        console.error('OpenAI görsel oluşturma hatası:', error);
+      });
 
-      // Process ID'yi hemen dön
       return processId;
     } catch (error) {
       console.error('OpenAI Görsel Oluşturma Hatası:', error);
