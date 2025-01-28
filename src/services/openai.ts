@@ -117,42 +117,37 @@ export class OpenAIService {
     try {
       await this.rateLimiter();
 
-      // Çocuk dostu ve güvenli prompt oluştur
+      const processId = Date.now().toString();
       const safePrompt = `Çocuk dostu illüstrasyon: ${prompt.slice(0, 800)}`;
 
-      const response = await this.openai.images.generate({
+      // Görsel oluşturma işlemini başlat
+      this.openai.images.generate({
         model: model as 'dall-e-2' | 'dall-e-3',
         prompt: safePrompt,
         n: 1,
-        size: '1024x1024',
+        size: '256x256', // Daha küçük boyut
         quality: 'standard',
         style: 'natural'
-      });
+      }).then(async response => {
+        const imageUrl = response.data[0].url;
+        if (imageUrl) {
+          // Webhook'a bildir
+          await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat/webhook`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-webhook-secret': process.env.WEBHOOK_SECRET || ''
+            },
+            body: JSON.stringify({ imageUrl, processId })
+          });
+        }
+      }).catch(console.error);
 
-      const imageUrl = response.data[0].url;
-      if (!imageUrl) {
-        throw new Error('Görsel URL\'i bulunamadı');
-      }
-
-      return imageUrl;
+      // Process ID'yi hemen dön
+      return processId;
     } catch (error) {
       console.error('OpenAI Görsel Oluşturma Hatası:', error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('length')) {
-          throw new Error('Görsel açıklaması çok uzun. Lütfen daha kısa bir açıklama deneyin.');
-        }
-        if (error.message.includes('safety')) {
-          throw new Error('Bu içerik için görsel oluşturulamıyor. Lütfen daha uygun bir açıklama deneyin.');
-        }
-        if (error.message.includes('rate limit')) {
-          throw new Error('Çok fazla istek gönderildi. Lütfen biraz bekleyin.');
-        }
-        if (error.message.includes('api key')) {
-          throw new Error('API anahtarı geçersiz veya eksik');
-        }
-      }
-      throw new Error('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      throw error;
     }
   }
 
