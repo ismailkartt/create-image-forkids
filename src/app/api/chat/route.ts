@@ -4,6 +4,7 @@ import { OpenAIService } from '@/services/openai';
 const allowedOrigins = [
   'http://localhost:3000', // Your local development address
   'https://create-image-forkids-zkuz.vercel.app', // Your Vercel domain
+  'https://create-image-forkids.netlify.app',
   // Add other allowed origins if needed (e.g., staging environments)
 ];
 
