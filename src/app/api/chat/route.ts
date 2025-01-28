@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     const openAIService = new OpenAIService();
     const response = await openAIService.sendMessage(message, systemMessage || '');
 
+    
     return NextResponse.json({
       success: true,
       data: response
