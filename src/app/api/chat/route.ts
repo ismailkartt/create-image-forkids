@@ -47,32 +47,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hemen bir işlem ID'si döndür
-    const processId = Date.now().toString();
-    
-    // Görüntü oluşturma işlemini arka planda başlat
     const openAIService = new OpenAIService();
-    openAIService.sendMessage(message, systemMessage || '')
-      .then(response => {
-        // Sonucu bir cache veya veritabanında sakla
-        // Bu örnekte global değişken kullanıyoruz (gerçek uygulamada Redis/DB kullanın)
-        global.imageResults = global.imageResults || {};
-        global.imageResults[processId] = response;
-      })
-      .catch(error => {
-        global.imageResults[processId] = { error: error.message };
-      });
+    const response = await openAIService.sendMessage(message, systemMessage || '');
 
-    return NextResponse.json({
-      success: true,
-      processId,
-      status: 'processing'
-    });
+    return NextResponse.json(
+      { success: true, data: response },
+      { status: 200 }
+    );
 
   } catch (error) {
     console.error('API Hatası:', error);
+    let errorMessage = 'Bir hata oluştu';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Bir hata oluştu' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
