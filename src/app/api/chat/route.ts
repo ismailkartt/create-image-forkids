@@ -32,9 +32,9 @@ export async function OPTIONS(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const res = new NextResponse(); // No body initially
+  const res = new NextResponse();
   if (!checkOriginAndSetHeaders(req, res)) {
-      return new NextResponse("Forbidden", { status: 403 })
+    return new NextResponse("Forbidden", { status: 403 })
   }
 
   try {
@@ -43,29 +43,37 @@ export async function POST(req: Request) {
     if (!message) {
       return NextResponse.json(
         { success: false, error: 'Mesaj içeriği gerekli' },
-        { status: 400 } // Headers are already set by checkOriginAndSetHeaders
+        { status: 400 }
       );
     }
 
+    // Hemen bir işlem ID'si döndür
+    const processId = Date.now().toString();
+    
+    // Görüntü oluşturma işlemini arka planda başlat
     const openAIService = new OpenAIService();
-    const response = await openAIService.sendMessage(message, systemMessage || '');
+    openAIService.sendMessage(message, systemMessage || '')
+      .then(response => {
+        // Sonucu bir cache veya veritabanında sakla
+        // Bu örnekte global değişken kullanıyoruz (gerçek uygulamada Redis/DB kullanın)
+        global.imageResults = global.imageResults || {};
+        global.imageResults[processId] = response;
+      })
+      .catch(error => {
+        global.imageResults[processId] = { error: error.message };
+      });
 
-    return NextResponse.json(
-      { success: true, data: response },
-      { status: 200 } // Headers are already set
-    );
+    return NextResponse.json({
+      success: true,
+      processId,
+      status: 'processing'
+    });
 
   } catch (error) {
     console.error('API Hatası:', error);
-
-    let errorMessage = 'Bir hata oluştu';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
     return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 } // Headers are already set
+      { success: false, error: error instanceof Error ? error.message : 'Bir hata oluştu' },
+      { status: 500 }
     );
   }
 }
