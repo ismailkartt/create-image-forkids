@@ -60,5 +60,27 @@ export const chatService = {
       console.error('Görsel API Hatası:', error);
       throw error;
     }
+  },
+
+  async sendMessages(messages: any[]): Promise<any> {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Bir hata oluştu');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Mesaj gönderme hatası:', error);
+      throw error;
+    }
   }
 }; 

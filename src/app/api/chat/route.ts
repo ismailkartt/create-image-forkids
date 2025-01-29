@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OpenAIService } from '@/services/openai';
+import OpenAI from 'openai';
 
 const allowedOrigins = [
   'http://localhost:3000', // Your local development address
@@ -8,6 +8,10 @@ const allowedOrigins = [
   'http://forkids.healwell.online',
   // Add other allowed origins if needed (e.g., staging environments)
 ];
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Function to check origin and set CORS headers
 function checkOriginAndSetHeaders(req: Request, res: NextResponse) {
@@ -36,33 +40,32 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
-    // API anahtarını kontrol et
+    const { messages } = await req.json();
+    
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API anahtarı yapılandırılmamış' },
-        { status: 500 }
-      );
+      throw new Error('OpenAI API anahtarı bulunamadı');
     }
 
-    const body = await req.json();
-    const { message, systemMessage } = body;
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: messages,
+    });
 
-    if (!message) {
-      return NextResponse.json(
-        { error: 'Mesaj gerekli' },
-        { status: 400 }
-      );
-    }
-
-    const openAIService = new OpenAIService();
-    const response = await openAIService.sendMessage(message, systemMessage);
-
-    return NextResponse.json(response);
-  } catch (error) {
+    return new Response(JSON.stringify(response.choices[0].message), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200
+    });
+    
+  } catch (error: any) {
     console.error('Chat API Hatası:', error);
-    return NextResponse.json(
-      { error: 'İstek işlenirken bir hata oluştu' },
-      { status: 500 }
-    );
+    
+    const errorMessage = error.message || 'Bilinmeyen bir hata oluştu';
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: error.response?.data || error.cause || error.stack 
+    }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 500
+    });
   }
 }
