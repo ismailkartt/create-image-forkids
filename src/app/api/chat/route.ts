@@ -13,19 +13,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Function to check origin and set CORS headers
-function checkOriginAndSetHeaders(req: Request, res: NextResponse) {
-  const origin = req.headers.get('origin');
 
-  if (allowedOrigins.includes(origin ?? '') || !origin) {
-    res.headers.set('Access-Control-Allow-Origin', origin ?? '*');
-    res.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    return true; // Origin is allowed
-  } else {
-    return false; // Origin is not allowed
-  }
-}
 
 export async function OPTIONS() {
   return new NextResponse(null, {

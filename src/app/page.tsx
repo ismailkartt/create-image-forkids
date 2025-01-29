@@ -60,21 +60,23 @@ export default function Home() {
 
         {/* Sidebar Açma Butonu - Desktop */}
         {!isDesktopSidebarOpen && (
-          <button
-            onClick={() => setIsDesktopSidebarOpen(true)}
-            className="hidden md:flex items-center justify-center h-10 absolute left-2 top-3 
-            bg-gradient-to-r from-blue-500 to-purple-500 text-white 
-            rounded-lg hover:opacity-90 transition-all shadow-md px-3
-            hover:scale-105 transform duration-200"
-            title="Sohbetleri Göster"
-          >
-            <div className="flex items-center gap-2">
-              <FiChevronLeft 
-                size={20} 
-                className="transform rotate-180"
-              />
-            </div>
-          </button>
+          <div className="hidden md:block absolute left-0 top-0 bottom-0 z-40">
+            <button
+              onClick={() => setIsDesktopSidebarOpen(true)}
+              className="flex items-center justify-center h-10 m-2
+              bg-gradient-to-r from-blue-500 to-purple-500 text-white 
+              rounded-lg hover:opacity-90 transition-all shadow-md px-3
+              hover:scale-105 transform duration-200"
+              title="Sohbetleri Göster"
+            >
+              <div className="flex items-center gap-2">
+                <FiChevronLeft 
+                  size={20} 
+                  className="transform rotate-180"
+                />
+              </div>
+            </button>
+          </div>
         )}
 
         {/* Ana İçerik */}
