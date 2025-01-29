@@ -1,28 +1,38 @@
-import { OpenAIService } from '@/services/openai';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import OpenAI from 'openai';
+
+export const runtime = 'edge'; // Edge runtime'ı aktif et
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, model } = await req.json();
     
-    if (!prompt) {
-      return NextResponse.json(
-        { error: 'Görsel açıklaması gerekli' },
-        { status: 400 }
-      );
-    }
+    const response = await openai.images.generate({
+      model: model || "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: "1024x1024",
+    });
 
-    const openai = new OpenAIService();
-    const imageUrl = await openai.generateImage(prompt);
-
-    return NextResponse.json({ imageUrl });
+    return new Response(JSON.stringify({
+      success: true,
+      imageUrl: response.data[0].url
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Görsel oluşturma hatası:', error);
-    
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Görsel oluşturulurken bir hata oluştu' },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: error.message 
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 } 
