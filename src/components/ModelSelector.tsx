@@ -20,7 +20,14 @@ export default function ModelSelector({ isOpen, onClose, selectedModel, onSelect
   if (!mounted || !isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Model Seç</h3>
         <div className="space-y-4">

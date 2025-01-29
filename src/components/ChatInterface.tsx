@@ -31,15 +31,19 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
-      <MessageList
-        messages={messages}
-        onEdit={handleEdit}
-        onGenerateImage={handleGenerateImage}
-        onContinueStory={handleContinueStory}
-        onRegenerateImage={handleRegenerateImage}
-        onSave={handleSave}
-      />
-      <MessageInput onSend={sendMessage} isLoading={isLoading} />
+      <div className="flex-1 overflow-y-auto">
+        <MessageList
+          messages={messages}
+          onEdit={handleEdit}
+          onGenerateImage={handleGenerateImage}
+          onContinueStory={handleContinueStory}
+          onRegenerateImage={handleRegenerateImage}
+          onSave={handleSave}
+        />
+      </div>
+      <div className="flex-shrink-0">
+        <MessageInput onSend={sendMessage} isLoading={isLoading} />
+      </div>
     </div>
   );
 } 

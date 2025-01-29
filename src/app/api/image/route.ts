@@ -11,6 +11,17 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, model } = await req.json();
     
+    // Prompt uzunluğunu kontrol et
+    if (prompt.length > 1000) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Prompt 1000 karakterden uzun olamaz'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const response = await openai.images.generate({
       model: model || "dall-e-3",
       prompt: prompt,

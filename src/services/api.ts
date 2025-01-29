@@ -38,13 +38,16 @@ export const chatService = {
 
   async generateImage(prompt: string, model: string): Promise<string> {
     try {
+      // Prompt'u 1000 karaktere kısıtla
+      const truncatedPrompt = prompt.slice(0, 950); // Güvenli bir sınır için 950 karakter
+
       const response = await fetch('/api/image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt,
+          prompt: truncatedPrompt,
           model
         }),
       });
@@ -55,7 +58,6 @@ export const chatService = {
         throw new Error(data.error || 'Görsel oluşturulamadı');
       }
 
-      
       return data.imageUrl;
     } catch (error) {
       console.error('Görsel API Hatası:', error);

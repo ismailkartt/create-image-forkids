@@ -18,6 +18,7 @@ interface ChatContextType {
   handleContinueStory: (messageId: string) => Promise<void>;
   handleRegenerateImage: (messageId: string) => Promise<void>;
   handleSave: (messageId: string) => Promise<void>;
+  editMessage: (messageId: string, newContent: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -141,24 +142,48 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
     }
   };
 
-  const handleEdit = async (messageId: string, newContent: string) => {
+  const handleEditMessage = async (messageId: string, newContent: string) => {
     try {
-      const updatedMessages = messages.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, content: newContent, actions: ['generate-image'] }
-          : msg
+      // Mevcut sohbeti bul
+      const conversation = conversations.find(c => 
+        c.messages.some(m => m.id === messageId)
       );
-      setMessages(updatedMessages as Message[]);
-      updateConversation(updatedMessages as Message[]);
+
+      if (!conversation) return;
+
+      // Düzenlenen mesajın indexini bul
+      const messageIndex = conversation.messages.findIndex(m => m.id === messageId);
+      if (messageIndex === -1) return;
+
+      // Düzenlenen mesajı güncelle
+      const updatedMessage = {
+        ...conversation.messages[messageIndex],
+        content: newContent,
+        editedAt: new Date() // Düzenleme zamanını kaydet
+      };
+
+      // Sohbeti güncelle
+      const updatedMessages = [...conversation.messages];
+      updatedMessages[messageIndex] = updatedMessage;
+
+      const updatedConversation = {
+        ...conversation,
+        messages: updatedMessages,
+        date: new Date().toISOString()
+      };
+
+      // State'i güncelle
+      setConversations(conversations.map(c => 
+        c.id === conversation.id ? updatedConversation : c
+      ));
+      setCurrentConversation(updatedConversation);
+
+      // LocalStorage'ı güncelle
+      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+
     } catch (error) {
       console.error('Edit error:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 3).toString(),
-        role: 'assistant',
-        content: 'Düzenleme başarısız oldu. Lütfen tekrar deneyin.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      throw error;
     }
   };
 
@@ -296,11 +321,12 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
     selectConversation,
     deleteConversation,
     isLoading,
-    handleEdit,
+    handleEdit: handleEditMessage,
     handleGenerateImage,
     handleContinueStory,
     handleRegenerateImage,
-    handleSave
+    handleSave,
+    editMessage: handleEditMessage,
   };
 
   return (

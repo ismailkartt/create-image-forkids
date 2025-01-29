@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Message, ImageGenerationOptions, ImageModelConfig } from '@/types';
-import { motion } from 'framer-motion';
-import { AI_MODELS, AI_MODEL_CONFIGS } from '@/services/openai';
-import { FiDownload, FiMaximize2, FiMinimize2, FiX } from 'react-icons/fi';
-import Image from 'next/image';
+import { useState, useRef, useEffect } from "react";
+import { Message, ImageGenerationOptions, ImageModelConfig } from "@/types";
+import { motion } from "framer-motion";
+import { AI_MODELS, AI_MODEL_CONFIGS } from "@/services/openai";
+import { FiDownload, FiMaximize2, FiMinimize2, FiX } from "react-icons/fi";
+import Image from "next/image";
 
 interface Props {
   message: Message;
@@ -16,13 +16,13 @@ interface Props {
   onSave: (messageId: string) => Promise<void>;
 }
 
-export default function MessageItem({ 
-  message, 
-  onEdit, 
-  onGenerateImage, 
+export default function MessageItem({
+  message,
+  onEdit,
+  onGenerateImage,
   onContinueStory,
   onRegenerateImage,
-  onSave 
+  onSave,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
@@ -35,21 +35,23 @@ export default function MessageItem({
 
   const imageOptions: ImageGenerationOptions[] = [
     {
-      model: 'dall-e-2',
-      price: (AI_MODEL_CONFIGS[AI_MODELS.DALL_E_2] as ImageModelConfig).costPerImage,
-      quality: 'Standart'
+      model: "dall-e-2",
+      price: (AI_MODEL_CONFIGS[AI_MODELS.DALL_E_2] as ImageModelConfig)
+        .costPerImage,
+      quality: "Standart",
     },
     {
-      model: 'dall-e-3',
-      price: (AI_MODEL_CONFIGS[AI_MODELS.DALL_E_3] as ImageModelConfig).costPerImage,
-      quality: 'Yüksek'
-    }
+      model: "dall-e-3",
+      price: (AI_MODEL_CONFIGS[AI_MODELS.DALL_E_3] as ImageModelConfig)
+        .costPerImage,
+      quality: "Yüksek",
+    },
   ];
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
-      textareaRef.current.scrollIntoView({ behavior: 'smooth' });
+      textareaRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [isEditing]);
 
@@ -60,7 +62,7 @@ export default function MessageItem({
       setIsEditing(false);
       setEditedContent(editedContent);
     } catch (error) {
-      console.error('Edit error:', error);
+      console.error("Edit error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -73,60 +75,119 @@ export default function MessageItem({
   const handleDownload = async (imageUrl: string) => {
     try {
       setIsDownloading(true);
-      
+
       // Server üzerinden görsel indir
-      const response = await fetch(`/api/download?url=${encodeURIComponent(imageUrl)}`);
-      
+      const response = await fetch(
+        `/api/download?url=${encodeURIComponent(imageUrl)}`
+      );
+
       if (!response.ok) {
-        throw new Error('İndirme başarısız oldu');
+        throw new Error("İndirme başarısız oldu");
       }
 
       // Blob olarak al
       const blob = await response.blob();
-      
+
       // Tarayıcıda indirme işlemini başlat
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'ai-generated-image.png';
+      link.download = "ai-generated-image.png";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
-
     } catch (error) {
-      console.error('İndirme hatası:', error);
-      alert('Görsel indirilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error("İndirme hatası:", error);
+      alert("Görsel indirilirken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsDownloading(false);
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="flex flex-col gap-4"
     >
       {/* Message Content */}
-      <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-        {message.role === 'assistant' && (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm mr-2">
-            AI
+      <div
+        className={`flex flex-col ${
+          message.role === "user" ? "items-end" : "items-start"
+        }`}
+      >
+        {message.role === "assistant" && (
+          <div className="flex items-center gap-2 mb-1 px-4">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 shadow-md">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-5 h-5 text-white"
+                fill="none"
+                strokeWidth="1.2"
+                stroke="currentColor"
+              >
+                {/* Ana daire */}
+                <circle 
+                  cx="12" 
+                  cy="12" 
+                  r="8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* İç daire */}
+                <circle 
+                  cx="12" 
+                  cy="12" 
+                  r="4.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Işınlar */}
+                <path 
+                  d="M12 4v2M12 18v2M4 12h2M18 12h2" 
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Çapraz ışınlar */}
+                <path 
+                  d="M6.5 6.5l1.4 1.4M16.1 16.1l1.4 1.4M6.5 17.5L7.9 16.1M16.1 7.9l1.4-1.4" 
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Merkezdeki artı */}
+                <path 
+                  d="M12 9.5v5M9.5 12h5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
           </div>
         )}
+
+        {message.role === "user" && (
+          <div className="flex items-center gap-2 mb-1 px-4 self-end">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white text-sm">
+              Sen
+            </div>
+          </div>
+        )}
+
         <div
           className={`max-w-[95%] md:max-w-[90%] rounded-2xl p-4 ${
-            message.role === 'user' 
-              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
-              : 'bg-white border-2 border-purple-100 text-gray-800'
+            message.role === "user"
+              ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+              : "bg-white border-2 border-purple-100 text-gray-800"
           } shadow-md`}
         >
           {isEditing ? (
             <div className="fixed inset-0 bg-white z-50 flex flex-col">
               <div className="p-4 border-b bg-white flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Metni Düzenle</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Metni Düzenle
+                </h3>
                 <button
                   onClick={() => setIsEditing(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg"
@@ -134,7 +195,7 @@ export default function MessageItem({
                   <FiX size={24} />
                 </button>
               </div>
-              
+
               <div className="flex-1 p-4 overflow-auto">
                 <textarea
                   ref={textareaRef}
@@ -142,9 +203,9 @@ export default function MessageItem({
                   onChange={(e) => setEditedContent(e.target.value)}
                   className="w-full h-full p-4 border rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-purple-300 focus:border-transparent resize-none"
                   disabled={isLoading}
-                  style={{ 
-                    fontSize: '0.925rem',
-                    lineHeight: '1.4'
+                  style={{
+                    fontSize: "0.925rem",
+                    lineHeight: "1.4",
                   }}
                   autoFocus
                 />
@@ -157,7 +218,7 @@ export default function MessageItem({
                     disabled={isLoading}
                     className="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 disabled:opacity-50 flex-1 sm:flex-none"
                   >
-                    {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
+                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
@@ -170,19 +231,23 @@ export default function MessageItem({
               </div>
             </div>
           ) : (
-            <p className={`text-[0.925rem] leading-relaxed ${message.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
+            <p
+              className={`text-[0.925rem] leading-relaxed ${
+                message.role === "user" ? "text-white" : "text-gray-800"
+              }`}
+            >
               {message.content}
             </p>
           )}
           {message.imageUrl && (
             <div className="mt-3 relative group">
-              <div 
-                onClick={() => setIsFullscreen(true)} 
+              <div
+                onClick={() => setIsFullscreen(true)}
                 className="cursor-pointer"
               >
-                <Image 
-                  src={message.imageUrl} 
-                  alt="Generated" 
+                <Image
+                  src={message.imageUrl}
+                  alt="Generated"
                   width={1024}
                   height={1024}
                   className="rounded-lg w-full h-auto"
@@ -192,20 +257,20 @@ export default function MessageItem({
 
               {/* Tam ekran görüntüleme */}
               {isFullscreen && (
-                <div 
+                <div
                   className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
                   onClick={() => setIsFullscreen(false)}
                 >
                   <div className="relative max-w-[90vw] max-h-[90vh]">
-                    <Image 
-                      src={message.imageUrl} 
-                      alt="Generated" 
+                    <Image
+                      src={message.imageUrl}
+                      alt="Generated"
                       width={1024}
                       height={1024}
                       className="object-contain max-w-full max-h-[90vh]"
                       unoptimized
                     />
-                    
+
                     {/* Kontrol butonları */}
                     <div className="absolute top-4 right-4 flex gap-2">
                       <button
@@ -278,11 +343,6 @@ export default function MessageItem({
             {new Date(message.timestamp).toLocaleTimeString()}
           </span>
         </div>
-        {message.role === 'user' && (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white text-sm ml-2">
-            Sen
-          </div>
-        )}
       </div>
 
       {/* Resim oluşturma modal'ı */}
@@ -292,12 +352,16 @@ export default function MessageItem({
             {isGenerating ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <h3 className="text-lg font-medium text-gray-900">Resim Oluşturuluyor</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Resim Oluşturuluyor
+                </h3>
                 <p className="text-sm text-gray-500 mt-2">Lütfen bekleyin...</p>
               </div>
             ) : (
               <>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Görsel Oluşturma Seçenekleri</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Görsel Oluşturma Seçenekleri
+                </h3>
                 <div className="space-y-4">
                   {imageOptions.map((option) => (
                     <button
@@ -316,11 +380,17 @@ export default function MessageItem({
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {option.model === 'dall-e-3' ? 'DALL-E 3' : 'DALL-E 2'}
+                            {option.model === "dall-e-3"
+                              ? "DALL-E 3"
+                              : "DALL-E 2"}
                           </h4>
-                          <p className="text-sm text-gray-600">Kalite: {option.quality}</p>
+                          <p className="text-sm text-gray-600">
+                            Kalite: {option.quality}
+                          </p>
                         </div>
-                        <span className="text-purple-600 font-medium">{option.price}</span>
+                        <span className="text-purple-600 font-medium">
+                          {option.price}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -338,23 +408,23 @@ export default function MessageItem({
       )}
 
       {/* Action Buttons */}
-      {message.actions && message.role === 'assistant' && (
+      {message.actions && message.role === "assistant" && (
         <div className="flex flex-wrap gap-2 justify-end mt-2">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isLoading}
             className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
-            {isLoading ? 'İşleniyor...' : 'Düzenle'}
+            {isLoading ? "İşleniyor..." : "Düzenle"}
           </button>
 
-          {message.actions.includes('generate-image') && !isEditing && (
+          {message.actions.includes("generate-image") && !isEditing && (
             <button
               onClick={handleRegenerateImage}
               disabled={isLoading || isGenerating}
               className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
             >
-              {isLoading || isGenerating ? 'İşleniyor...' : 'Görsel Oluştur'}
+              {isLoading || isGenerating ? "İşleniyor..." : "Görsel Oluştur"}
             </button>
           )}
 
@@ -365,21 +435,25 @@ export default function MessageItem({
                 disabled={isLoading || isGenerating}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50"
               >
-                {isLoading || isGenerating ? 'İşleniyor...' : 'Tekrar Oluştur'}
+                {isLoading || isGenerating ? "İşleniyor..." : "Tekrar Oluştur"}
               </button>
               <button
                 onClick={() => onContinueStory(message.id)}
                 disabled={isLoading || isGenerating}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
               >
-                {isLoading || isGenerating ? 'İşleniyor...' : 'Hikayeye Devam Et'}
+                {isLoading || isGenerating
+                  ? "İşleniyor..."
+                  : "Hikayeye Devam Et"}
               </button>
               <button
                 onClick={() => onSave(message.id)}
                 disabled={isLoading || isGenerating}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
               >
-                {isLoading || isGenerating ? 'Kaydediliyor...' : 'Kaydet ve Kapat'}
+                {isLoading || isGenerating
+                  ? "Kaydediliyor..."
+                  : "Kaydet ve Kapat"}
               </button>
             </>
           )}
@@ -387,4 +461,4 @@ export default function MessageItem({
       )}
     </motion.div>
   );
-} 
+}
