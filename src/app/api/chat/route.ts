@@ -42,6 +42,15 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
     
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'Geçerli mesaj formatı gerekli' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OpenAI API anahtarı bulunamadı');
     }

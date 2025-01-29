@@ -7,15 +7,17 @@ interface MessageResponse {
 export const chatService = {
   async sendMessage(message: string, systemMessage: string = ''): Promise<MessageResponse> {
     try {
+      const messages = [
+        { role: "system", content: systemMessage || "Sen yardımcı bir asistansın." },
+        { role: "user", content: message }
+      ];
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message,
-          systemMessage
-        }),
+        body: JSON.stringify({ messages }),
       });
 
       const data = await response.json();
@@ -24,11 +26,10 @@ export const chatService = {
         throw new Error(data.error || 'API isteği başarısız oldu');
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'İşlem başarısız oldu');
-      }
-
-      return data.data;
+      return {
+        type: 'text',
+        content: data.content
+      };
     } catch (error) {
       console.error('Chat API Hatası:', error);
       throw error;
