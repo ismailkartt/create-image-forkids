@@ -1,38 +1,27 @@
-import { NextResponse } from 'next/server';
 import { OpenAIService } from '@/services/openai';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { prompt, model } = await req.json();
-
+    const { prompt } = await req.json();
+    
     if (!prompt) {
       return NextResponse.json(
-        { success: false, error: 'Görsel açıklaması gerekli' },
+        { error: 'Görsel açıklaması gerekli' },
         { status: 400 }
       );
     }
 
-    const openAIService = new OpenAIService();
-    const imageUrl = await openAIService.generateImage(prompt, model);
+    const openai = new OpenAIService();
+    const imageUrl = await openai.generateImage(prompt);
 
-    return NextResponse.json({
-      success: true,
-      imageUrl
-    });
-
-  } catch (error) {
-    console.error('Görsel API Hatası:', error);
+    return NextResponse.json({ imageUrl });
     
-    let errorMessage = 'Görsel oluşturulurken bir hata oluştu';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
+  } catch (error) {
+    console.error('Görsel oluşturma hatası:', error);
+    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: errorMessage 
-      },
+      { error: error instanceof Error ? error.message : 'Görsel oluşturulurken bir hata oluştu' },
       { status: 500 }
     );
   }

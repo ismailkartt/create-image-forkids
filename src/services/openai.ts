@@ -78,11 +78,19 @@ interface MessageResponse {
   imageUrl?: string;
 }
 
+interface ImageCacheItem {
+  url: string;
+  timestamp: number;
+  prompt: string;
+}
+
 export class OpenAIService {
   private openai: OpenAI;
   private config: ChatConfig | undefined;
   private lastRequestTime: number = 0;
   private minRequestInterval: number = 1000;
+  private imageCache: Map<string, ImageCacheItem> = new Map();
+  private readonly CACHE_DURATION = 1000 * 60 * 60; // 1 saat
 
   constructor() {
     // Sadece server tarafında çalıştığından emin ol
@@ -113,47 +121,77 @@ export class OpenAIService {
     this.lastRequestTime = Date.now();
   }
 
-  async generateImage(prompt: string, model: string = AI_MODELS.DALL_E_3): Promise<string> {
+  private getCacheKey(prompt: string, model: string): string {
+    return `${prompt}_${model}`.toLowerCase().trim();
+  }
+
+  private isValidCacheItem(item: ImageCacheItem): boolean {
+    return Date.now() - item.timestamp < this.CACHE_DURATION;
+  }
+
+  async generateImage(prompt: string, model: string = AI_MODELS.DALL_E_2): Promise<string> {
     try {
+      const cacheKey = this.getCacheKey(prompt, model);
+      const cachedItem = this.imageCache.get(cacheKey);
+
+      if (cachedItem && this.isValidCacheItem(cachedItem)) {
+        console.log('Görsel önbellekten alındı');
+        return cachedItem.url;
+      }
+
       await this.rateLimiter();
 
-      // Çocuk dostu ve güvenli prompt oluştur
-      const safePrompt = `Çocuk dostu illüstrasyon: ${prompt.slice(0, 800)}`;
+      // Prompt optimizasyonu
+      const safePrompt = prompt.slice(0, 800).trim();
 
-      const response = await this.openai.images.generate({
+      // Paralel istek için Promise.race kullanımı
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('İstek zaman aşımına uğradı')), 30000);
+      });
+
+      const imagePromise = this.openai.images.generate({
         model: model as 'dall-e-2' | 'dall-e-3',
         prompt: safePrompt,
         n: 1,
-        size: '1024x1024',
+        size: this.getOptimalImageSize(model),
         quality: 'standard',
-        style: 'natural'
+        style: 'vivid'
       });
 
+      const response = await Promise.race([imagePromise, timeoutPromise]);
       const imageUrl = response.data[0].url;
+
       if (!imageUrl) {
         throw new Error('Görsel URL\'i bulunamadı');
       }
+
+      // Önbelleğe kaydet
+      this.imageCache.set(cacheKey, {
+        url: imageUrl,
+        timestamp: Date.now(),
+        prompt: safePrompt
+      });
 
       return imageUrl;
     } catch (error) {
       console.error('OpenAI Görsel Oluşturma Hatası:', error);
       
       if (error instanceof Error) {
-        if (error.message.includes('length')) {
-          throw new Error('Görsel açıklaması çok uzun. Lütfen daha kısa bir açıklama deneyin.');
+        if (error.message.includes('zaman aşımı')) {
+          throw new Error('Görsel oluşturma zaman aşımına uğradı. Lütfen tekrar deneyin.');
         }
-        if (error.message.includes('safety')) {
-          throw new Error('Bu içerik için görsel oluşturulamıyor. Lütfen daha uygun bir açıklama deneyin.');
-        }
-        if (error.message.includes('rate limit')) {
-          throw new Error('Çok fazla istek gönderildi. Lütfen biraz bekleyin.');
-        }
-        if (error.message.includes('api key')) {
-          throw new Error('API anahtarı geçersiz veya eksik');
-        }
+        throw error;
       }
       throw new Error('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     }
+  }
+
+  private getOptimalImageSize(model: string): '256x256' | '512x512' | '1024x1024' {
+    if (model === AI_MODELS.DALL_E_3) {
+      return '1024x1024';
+    }
+    // Varsayılan olarak daha küçük boyut kullan
+    return '512x512';
   }
 
   async sendMessage(message: string, systemMessage: string = ''): Promise<MessageResponse> {
