@@ -85,7 +85,7 @@ interface ImageCacheItem {
 }
 
 export class OpenAIService {
-  private openai: OpenAI;
+  private openai: OpenAI | undefined;
   private config: ChatConfig | undefined;
   private lastRequestTime: number = 0;
   private minRequestInterval: number = 1000;
@@ -149,6 +149,10 @@ export class OpenAIService {
         setTimeout(() => reject(new Error('İstek zaman aşımına uğradı')), 30000);
       });
 
+      if (!this.openai) {
+        throw new Error('OpenAI servisi başlatılmamış');
+      }
+
       const imagePromise = this.openai.images.generate({
         model: model as 'dall-e-2' | 'dall-e-3',
         prompt: safePrompt,
@@ -198,6 +202,10 @@ export class OpenAIService {
     try {
       await this.rateLimiter();
 
+      if (!this.openai) {
+        throw new Error('OpenAI servisi başlatılmamış');
+      }
+
       const completion = await this.openai.chat.completions.create({
         model: this.config?.model || AI_MODELS.GPT_3_5,
         messages: [
@@ -230,8 +238,11 @@ export class OpenAIService {
         if (error.message.includes('rate limit')) {
           throw new Error('Çok fazla istek gönderildi. Lütfen biraz bekleyin.');
         }
+        if (error.message.includes('insufficient_quota')) {
+          throw new Error('API kotası yetersiz');
+        }
       }
-      throw new Error('Mesaj işlenirken bir hata oluştu');
+      throw new Error('Mesaj işlenirken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
 

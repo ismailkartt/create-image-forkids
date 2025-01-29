@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { OpenAIService } from '@/services/openai';
 
 const allowedOrigins = [
@@ -23,51 +23,46 @@ function checkOriginAndSetHeaders(req: Request, res: NextResponse) {
   }
 }
 
-
-export async function OPTIONS(req: Request) {
-  const res = new NextResponse(null, { status: 200 });
-  if (checkOriginAndSetHeaders(req, res)) {
-     return res;
-  } else {
-      return new NextResponse("Forbidden", { status: 403 })
-  }
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
-export async function POST(req: Request) {
-  const res = new NextResponse(); // No body initially
-  if (!checkOriginAndSetHeaders(req, res)) {
-      return new NextResponse("Forbidden", { status: 403 })
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const { message, systemMessage } = await req.json();
+    // API anahtarını kontrol et
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OpenAI API anahtarı yapılandırılmamış' },
+        { status: 500 }
+      );
+    }
+
+    const body = await req.json();
+    const { message, systemMessage } = body;
 
     if (!message) {
       return NextResponse.json(
-        { success: false, error: 'Mesaj içeriği gerekli' },
-        { status: 400 } // Headers are already set by checkOriginAndSetHeaders
+        { error: 'Mesaj gerekli' },
+        { status: 400 }
       );
     }
 
     const openAIService = new OpenAIService();
-    const response = await openAIService.sendMessage(message, systemMessage || '');
+    const response = await openAIService.sendMessage(message, systemMessage);
 
-    return NextResponse.json(
-      { success: true, data: response },
-      { status: 200 } // Headers are already set
-    );
-
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('API Hatası:', error);
-
-    let errorMessage = 'Bir hata oluştu';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
+    console.error('Chat API Hatası:', error);
     return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 } // Headers are already set
+      { error: 'İstek işlenirken bir hata oluştu' },
+      { status: 500 }
     );
   }
 }
