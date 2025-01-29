@@ -166,7 +166,7 @@ export function ChatProvider({ children, config }: ChatProviderProps) {
       const updatedMessages = [...conversation.messages];
       updatedMessages[messageIndex] = updatedMessage;
 
-      const updatedConversation = {
+        const updatedConversation = {
         ...conversation,
         messages: updatedMessages,
         date: new Date().toISOString()

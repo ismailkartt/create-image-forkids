@@ -78,9 +78,9 @@ export default function Home() {
         )}
 
         {/* Ana İçerik */}
-        <div className="flex-1 flex flex-col w-full">
-          {/* Üst Bar */}
-          <div className="bg-white border-b border-gray-200 p-2 sm:p-4 flex justify-between items-center shadow-sm">
+        <div className="flex-1 flex flex-col w-full min-h-0">
+          {/* Üst Bar - Sabit pozisyon */}
+          <div className="sticky top-0 z-30 bg-white border-b border-gray-200 p-2 sm:p-4 flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -96,12 +96,13 @@ export default function Home() {
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90 transition-opacity"
               >
                 <FiSettings size={16} className="text-white" />
-                <span>Model: {AI_MODEL_CONFIGS[selectedModel].name}</span>
+                <span className="hidden sm:inline">Model: {AI_MODEL_CONFIGS[selectedModel].name}</span>
+                <span className="sm:hidden">Model</span>
               </button>
             </div>
           </div>
 
-          {/* Chat Alanı */}
+          {/* Chat Alanı - Kalan alanı doldur */}
           <div className="flex-1 overflow-hidden bg-gray-50">
             <ChatInterface />
           </div>
